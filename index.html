@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>BrokersBloc Portal</title>
+  <title>BrokersBloc Tracker</title>
   <style>
     body {
       font-family: sans-serif;
@@ -12,20 +12,107 @@
     }
     .hidden { display: none; }
     .section { margin-bottom: 40px; }
-    iframe {
-      width: 100%;
+
+    button {
+      padding: 10px 16px;
+      background-color: #007bff;
+      color: white;
       border: none;
-      border-radius: 8px;
+      border-radius: 6px;
+      font-size: 14px;
+      cursor: pointer;
+      margin-right: 10px;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.7); }
+      70% { box-shadow: 0 0 0 10px rgba(255, 193, 7, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(255, 193, 7, 0); }
+    }
+    .stage-pill {
+      display: inline-block;
+      padding: 6px 10px;
+      margin-right: 8px;
+      border-radius: 12px;
+      font-size: 12px;
+      color: white;
+    }
+    .completed {
+      background-color: #28a745;
+    }
+    .upcoming {
+      background-color: #ccc;
+    }
+    .current {
+      background-color: #ffc107;
+      color: #000;
+      font-weight: bold;
+      animation: pulse 1.5s infinite;
+    }
+
+    #celebration-overlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.7);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      flex-direction: column;
+      animation: fadeIn 0.4s ease-in-out;
+    }
+
+    #celebration-overlay h1 {
+      color: #fff;
+      font-size: 48px;
+      animation: bounce 1s infinite;
+      text-align: center;
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
     }
   </style>
+
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 </head>
 <body>
+  <!-- Celebration Overlay -->
+  <div id="celebration-overlay">
+    <h1>🎯 Stage Complete!</h1>
+  </div>
+
+  <audio id="celebration-sound" src="https://assets.mixkit.co/sfx/preview/mixkit-game-bonus-reached-2065.mp3"></audio>
+
   <!-- LOGIN FORM -->
   <div id="login-section" class="section">
     <h2>Broker Login</h2>
-    <input type="text" id="username" placeholder="Username" />
-    <input type="email" id="email" placeholder="Email" />
-    <input type="text" id="pin" placeholder="PIN" />
+    <input type="text" id="username" placeholder="Username" style="margin-bottom: 10px; display: block;" />
+    <input type="email" id="email" placeholder="Email" style="margin-bottom: 10px; display: block;" />
+    <div style="position: relative; display: inline-block; margin-bottom: 10px;">
+      <input type="password" id="pin" placeholder="PIN" style="padding-right: 30px;" />
+      <span onclick="togglePinVisibility()" style="
+        position: absolute;
+        right: 8px;
+        top: 50%;
+        transform: translateY(-50%);
+        cursor: pointer;
+        font-size: 14px;
+        color: #007bff;
+      " id="toggle-pin">👁</span>
+    </div>
+    <br />
     <button onclick="verifyBroker()">Access Portal</button>
     <p id="login-error" style="color: red;"></p>
   </div>
@@ -34,25 +121,30 @@
   <div id="dashboard-section" class="hidden">
     <div class="section">
       <h2 id="welcome-msg"></h2>
-    </div>
-
-    <!-- FORM -->
-    <div class="section">
-      <h3>Submit a New RFP</h3>
-      <iframe id="rfp-form" height="700"></iframe>
+      <button onclick="openRfpForm()">📝 Submit New RFP</button>
+      <button onclick="loadDashboard()">🔄 Refresh Tracker</button>
+      <button onclick="logout()">Logout</button>
     </div>
 
     <!-- TRACKER -->
     <div class="section">
       <h3>Your Submitted RFPs</h3>
       <div id="tracker-container"></div>
-      <button onclick="loadDashboard()">🔄 Refresh Tracker</button>
     </div>
-
-    <button onclick="logout()">Log Out</button>
   </div>
 
   <script>
+    let previousStageMap = {};
+
+    function togglePinVisibility() {
+      const pinInput = document.getElementById("pin");
+      const toggleIcon = document.getElementById("toggle-pin");
+      const isPassword = pinInput.type === "password";
+
+      pinInput.type = isPassword ? "text" : "password";
+      toggleIcon.textContent = isPassword ? "🙈" : "👁";
+    }
+
     async function verifyBroker() {
       const username = document.getElementById("username").value;
       const email = document.getElementById("email").value;
@@ -64,10 +156,56 @@
       if (res.ok) {
         sessionStorage.setItem("brokerName", username);
         sessionStorage.setItem("brokerEmail", email);
+        sessionStorage.setItem("brokerPin", pin);
         loadDashboard();
       } else {
         document.getElementById("login-error").textContent = "Invalid email, PIN, or username. Please try again.";
       }
+    }
+
+    function openRfpForm() {
+      const username = sessionStorage.getItem("brokerName");
+      const email = sessionStorage.getItem("brokerEmail");
+      const pin = sessionStorage.getItem("brokerPin");
+
+      const url = `https://airtable.com/appTl5b0TOB6Sh8N5/pagd8oOz2RO9zbYGb/form?prefill_Username=${encodeURIComponent(username)}&prefill_Email=${encodeURIComponent(email)}&prefill_PIN=${encodeURIComponent(pin)}`;
+      window.open(url, "_blank");
+    }
+
+    function triggerFireworks() {
+      const sound = document.getElementById("celebration-sound");
+      const overlay = document.getElementById("celebration-overlay");
+
+      sound.currentTime = 0;
+      sound.play();
+
+      overlay.style.display = "flex";
+      setTimeout(() => {
+        overlay.style.display = "none";
+      }, 3000);
+
+      const duration = 1.5 * 1000;
+      const animationEnd = Date.now() + duration;
+      const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 1000, scalar: 1.8 };
+
+      function randomInRange(min, max) {
+        return Math.random() * (max - min) + min;
+      }
+
+      const interval = setInterval(() => {
+        const timeLeft = animationEnd - Date.now();
+        if (timeLeft <= 0) return clearInterval(interval);
+
+        confetti(Object.assign({}, defaults, {
+          particleCount: 60,
+          origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 }
+        }));
+
+        confetti(Object.assign({}, defaults, {
+          particleCount: 60,
+          origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 }
+        }));
+      }, 250);
     }
 
     function loadDashboard() {
@@ -80,9 +218,6 @@
       document.getElementById("dashboard-section").classList.remove("hidden");
 
       document.getElementById("welcome-msg").textContent = `Welcome, ${brokerName}`;
-
-      const formUrl = `https://airtable.com/appTl5b0TOB6Sh8N5/tbl1zRdsoor73QLqb/viwnW5EImflhH52T2?prefill_Username=${encodeURIComponent(brokerName)}&prefill_Email=${encodeURIComponent(email)}`;
-      document.getElementById("rfp-form").src = formUrl;
 
       fetch(`/api/projects?broker=${encodeURIComponent(brokerName)}`)
         .then(res => res.json())
@@ -99,20 +234,19 @@
             const stages = ["Census Received", "Processing", "Engaging Carriers", "Preparing Quote", "Quote Returned"];
             const currentIndex = proj.stageIndex || 0;
 
-            const stageHTML = stages.map((stage, i) => `
-              <div style="
-                display: inline-block;
-                padding: 6px 10px;
-                margin-right: 8px;
-                border-radius: 12px;
-                background-color: ${i <= currentIndex ? '#28a745' : '#ccc'};
-                color: white;
-                font-weight: ${i === currentIndex ? 'bold' : 'normal'};
-                font-size: 12px;
-              ">
-                ${stage}
-              </div>
-            `).join('');
+            const prev = previousStageMap[proj.projectName];
+            if (prev !== undefined && currentIndex > prev) {
+              triggerFireworks();
+            }
+            previousStageMap[proj.projectName] = currentIndex;
+
+            const stageHTML = stages.map((stage, i) => {
+              const className =
+                i < currentIndex ? 'stage-pill completed' :
+                i === currentIndex ? 'stage-pill current' :
+                'stage-pill upcoming';
+              return `<div class="${className}">${stage}</div>`;
+            }).join('');
 
             const card = document.createElement("div");
             card.style.padding = "12px";
