@@ -10,48 +10,16 @@
       margin: 0;
       padding: 40px;
     }
+
     h2 {
       margin-bottom: 20px;
     }
+
     input, button {
       padding: 10px;
       margin: 5px;
       font-size: 1em;
     }
-    .stage-chain {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin: 10px 0;
-      padding: 10px;
-    }
-    .stage {
-      flex: 1;
-      text-align: center;
-      padding: 10px;
-      border-radius: 6px;
-      margin: 0 5px;
-      background-color: #d3d3d3;
-      color: #333;
-      font-weight: bold;
-      position: relative;
-    }
-    .stage:before {
-      content: "";
-      position: absolute;
-      top: 50%;
-      left: -5px;
-      width: 10px;
-      height: 10px;
-      background: #333;
-      border-radius: 50%;
-      transform: translateY(-50%);
-    }
-    .stage:first-child:before { display: none; }
-
-    .active { background-color: #28a745; color: white; }
-    .complete { background-color: #007bff; color: white; }
-    .future { background-color: #d3d3d3; color: #555; }
 
     #login-section, #dashboard-section {
       max-width: 700px;
@@ -71,13 +39,45 @@
       padding: 20px;
       border-radius: 8px;
       box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-      margin-bottom: 20px;
+      margin-bottom: 25px;
+    }
+
+    .tracker {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 10px;
+    }
+
+    .step {
+      flex: 1;
+      text-align: center;
+      padding: 10px 5px;
+      margin: 0 4px;
+      border-radius: 6px;
+      font-size: 0.85em;
+      font-weight: bold;
+      color: white;
+      background-color: #ccc;
+      transition: all 0.3s ease-in-out;
+    }
+
+    .complete {
+      background-color: #007bff;
+    }
+
+    .active {
+      background-color: #28a745;
+    }
+
+    .future {
+      background-color: #d3d3d3;
+      color: #555;
     }
 
     .time-remaining {
       font-size: 0.95em;
       color: #666;
-      margin-top: 5px;
+      margin-top: 8px;
     }
   </style>
 </head>
@@ -157,19 +157,19 @@
             card.className = "rfp-card";
             card.innerHTML = `<h3>${rfp.projectName}</h3>`;
 
-            const chain = document.createElement("div");
-            chain.className = "stage-chain";
+            const tracker = document.createElement("div");
+            tracker.className = "tracker";
 
             STAGES.forEach((stage, i) => {
-              const el = document.createElement("div");
-              el.classList.add("stage");
+              const step = document.createElement("div");
+              step.classList.add("step");
 
-              if (i < stageIndex) el.classList.add("complete");
-              else if (i === stageIndex) el.classList.add("active");
-              else el.classList.add("future");
+              if (i < stageIndex) step.classList.add("complete");
+              else if (i === stageIndex) step.classList.add("active");
+              else step.classList.add("future");
 
-              el.textContent = stage;
-              chain.appendChild(el);
+              step.textContent = stage;
+              tracker.appendChild(step);
             });
 
             const hours = parseInt((parseFloat(rfp.timeRemaining) || 0) * 24);
@@ -179,7 +179,7 @@
             timeInfo.className = "time-remaining";
             timeInfo.textContent = `Time Remaining: ${timeText}`;
 
-            card.appendChild(chain);
+            card.appendChild(tracker);
             card.appendChild(timeInfo);
             container.appendChild(card);
           });
