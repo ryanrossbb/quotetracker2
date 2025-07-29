@@ -60,16 +60,16 @@
     <h2>Login</h2>
     <input type="email" id="email" placeholder="Email" /><br>
     <input type="password" id="password" placeholder="Password" /><br>
-    <button onclick="verifyBroker()">Login</button>
+    <button id="login-button">Login</button>
     <p id="login-error" style="color:red;"></p>
   </div>
 
   <div id="dashboard-section" style="display:none;">
     <h2 id="welcome-msg"></h2>
     <div class="btn-row">
-      <button onclick="openRfpForm()">Submit New RFP</button>
-      <button onclick="loadDashboard()">Refresh Tracker</button>
-      <button onclick="logout()">Logout</button>
+      <button id="submit-button">Submit New RFP</button>
+      <button id="refresh-button">Refresh Tracker</button>
+      <button id="logout-button">Logout</button>
     </div>
     <div id="tracker-container"></div>
   </div>
@@ -162,9 +162,17 @@
       location.reload();
     }
 
-    if (sessionStorage.getItem("brokerName")) {
-      loadDashboard();
-    }
+    // Attach button listeners
+    document.addEventListener("DOMContentLoaded", () => {
+      document.getElementById("login-button").addEventListener("click", verifyBroker);
+      document.getElementById("submit-button").addEventListener("click", openRfpForm);
+      document.getElementById("refresh-button").addEventListener("click", loadDashboard);
+      document.getElementById("logout-button").addEventListener("click", logout);
+
+      if (sessionStorage.getItem("brokerName")) {
+        loadDashboard();
+      }
+    });
   </script>
 </body>
 </html>
