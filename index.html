@@ -18,31 +18,43 @@
       margin: 5px;
       font-size: 1em;
     }
-    .tracker-card {
-      padding: 15px;
-      border-radius: 8px;
-      margin-bottom: 12px;
-      color: white;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-      transition: transform 0.2s ease-in-out;
+    .stage-chain {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 10px 0;
+      padding: 10px;
     }
-    .tracker-card:hover {
-      transform: scale(1.02);
+    .stage {
+      flex: 1;
+      text-align: center;
+      padding: 10px;
+      border-radius: 6px;
+      margin: 0 5px;
+      background-color: #d3d3d3;
+      color: #333;
+      font-weight: bold;
+      position: relative;
     }
-    .stage-Census { background-color: #6c757d; }
-    .stage-Processing { background-color: #007bff; }
-    .stage-Carriers { background-color: #17a2b8; }
-    .stage-Quote { background-color: #ffc107; color: black; }
-    .stage-Returned { background-color: #28a745; animation: pulse 1s infinite; }
+    .stage:before {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: -5px;
+      width: 10px;
+      height: 10px;
+      background: #333;
+      border-radius: 50%;
+      transform: translateY(-50%);
+    }
+    .stage:first-child:before { display: none; }
 
-    @keyframes pulse {
-      0% { box-shadow: 0 0 0 0 rgba(40,167,69, 0.7); }
-      70% { box-shadow: 0 0 0 15px rgba(40,167,69, 0); }
-      100% { box-shadow: 0 0 0 0 rgba(40,167,69, 0); }
-    }
+    .active { background-color: #28a745; color: white; }
+    .complete { background-color: #007bff; color: white; }
+    .future { background-color: #d3d3d3; color: #555; }
 
     #login-section, #dashboard-section {
-      max-width: 600px;
+      max-width: 700px;
       margin: auto;
     }
 
@@ -52,6 +64,20 @@
 
     .btn-row button {
       margin-right: 10px;
+    }
+
+    .rfp-card {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+
+    .time-remaining {
+      font-size: 0.95em;
+      color: #666;
+      margin-top: 5px;
     }
   </style>
 </head>
@@ -76,6 +102,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   <script>
+    const STAGES = ["Census Received", "Processing", "Engaging Carriers", "Preparing Quote", "Quote Returned"];
     let lastSeenStages = {};
 
     async function verifyBroker() {
@@ -116,34 +143,44 @@
           }
 
           data.forEach(rfp => {
+            const currentStage = rfp.stage;
+            const stageIndex = STAGES.indexOf(currentStage);
             const stageKey = rfp.projectName;
             const prevStage = lastSeenStages[stageKey];
-            const newStage = rfp.stage;
-            lastSeenStages[stageKey] = newStage;
+            lastSeenStages[stageKey] = currentStage;
 
-            if (newStage === "Quote Returned" && prevStage !== "Quote Returned") {
-              confetti({
-                particleCount: 150,
-                spread: 100,
-                origin: { y: 0.6 }
-              });
+            if (currentStage === "Quote Returned" && prevStage !== "Quote Returned") {
+              confetti({ particleCount: 200, spread: 100, origin: { y: 0.6 } });
             }
 
-            const stageClass = {
-              "Census Received": "stage-Census",
-              "Processing": "stage-Processing",
-              "Engaging Carriers": "stage-Carriers",
-              "Preparing Quote": "stage-Quote",
-              "Quote Returned": "stage-Returned"
-            }[rfp.stage] || "";
-
             const card = document.createElement("div");
-            card.className = `tracker-card ${stageClass}`;
-            card.innerHTML = `
-              <strong>${rfp.projectName}</strong><br/>
-              Stage: ${rfp.stage}<br/>
-              Time Remaining: ${rfp.timeRemaining}
-            `;
+            card.className = "rfp-card";
+            card.innerHTML = `<h3>${rfp.projectName}</h3>`;
+
+            const chain = document.createElement("div");
+            chain.className = "stage-chain";
+
+            STAGES.forEach((stage, i) => {
+              const el = document.createElement("div");
+              el.classList.add("stage");
+
+              if (i < stageIndex) el.classList.add("complete");
+              else if (i === stageIndex) el.classList.add("active");
+              else el.classList.add("future");
+
+              el.textContent = stage;
+              chain.appendChild(el);
+            });
+
+            const hours = parseInt((parseFloat(rfp.timeRemaining) || 0) * 24);
+            const timeText = isNaN(hours) ? "N/A" : `${hours} hour${hours !== 1 ? 's' : ''}`;
+
+            const timeInfo = document.createElement("div");
+            timeInfo.className = "time-remaining";
+            timeInfo.textContent = `Time Remaining: ${timeText}`;
+
+            card.appendChild(chain);
+            card.appendChild(timeInfo);
             container.appendChild(card);
           });
         });
@@ -162,7 +199,6 @@
       location.reload();
     }
 
-    // Attach button listeners
     document.addEventListener("DOMContentLoaded", () => {
       document.getElementById("login-button").addEventListener("click", verifyBroker);
       document.getElementById("submit-button").addEventListener("click", openRfpForm);
