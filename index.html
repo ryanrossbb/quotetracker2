@@ -137,7 +137,7 @@
 
       document.getElementById("login-section").style.display = "none";
       document.getElementById("dashboard-section").style.display = "block";
-      document.getElementById("welcome-msg").textContent = `Welcome, ${name}`;
+      document.getElementById("welcome-msg").textContent = `Welcome, ${Broker Name}`;
 
       fetch(`/api/projects?broker=${encodeURIComponent(name)}`)
         .then(res => res.json())
