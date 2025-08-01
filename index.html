@@ -96,6 +96,14 @@
       <button id="logout-button">Logout</button>
     </div>
     <div id="tracker-container"></div>
+
+    <div id="change-password" style="margin-top: 40px;">
+      <h3>Change Password</h3>
+      <input type="password" id="old-password" placeholder="Current Password" /><br>
+      <input type="password" id="new-password" placeholder="New Password" /><br>
+      <button onclick="updatePassword()">Update Password</button>
+      <p id="password-message" style="color: green;"></p>
+    </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
@@ -111,7 +119,7 @@
       const data = await res.json();
 
       if (res.ok) {
-        sessionStorage.setItem("brokerName", data.brokerName);  // Broker First Name
+        sessionStorage.setItem("brokerName", data.brokerName);
         sessionStorage.setItem("brokerEmail", email);
         sessionStorage.setItem("brokerPassword", password);
         loadDashboard();
@@ -191,6 +199,36 @@
 
       const url = `https://airtable.com/appTl5b0TOB6Sh8N5/pagd8oOz2RO9zbYGb/form?prefill_Broker%20First%20Name=${encodeURIComponent(name)}&prefill_Email=${encodeURIComponent(email)}&prefill_Password=${encodeURIComponent(password)}`;
       window.open(url, "_blank");
+    }
+
+    async function updatePassword() {
+      const email = sessionStorage.getItem("brokerEmail");
+      const currentPassword = document.getElementById("old-password").value;
+      const newPassword = document.getElementById("new-password").value;
+      const message = document.getElementById("password-message");
+
+      if (!newPassword || !currentPassword) {
+        message.style.color = "red";
+        message.textContent = "Please fill in both fields.";
+        return;
+      }
+
+      const res = await fetch('/api/update-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, currentPassword, newPassword })
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        message.style.color = "green";
+        message.textContent = "Password updated successfully!";
+        sessionStorage.setItem("brokerPassword", newPassword);
+      } else {
+        message.style.color = "red";
+        message.textContent = data.error || "Failed to update password.";
+      }
     }
 
     function logout() {
