@@ -10,24 +10,30 @@
       margin: 0;
       padding: 40px;
     }
+
     h2 {
       margin-bottom: 20px;
     }
+
     input, button {
       padding: 10px;
       margin: 5px;
       font-size: 1em;
     }
+
     #login-section, #dashboard-section {
       max-width: 700px;
       margin: auto;
     }
+
     .btn-row {
       margin: 20px 0;
     }
+
     .btn-row button {
       margin-right: 10px;
     }
+
     .rfp-card {
       background: white;
       padding: 20px;
@@ -35,11 +41,13 @@
       box-shadow: 0 2px 5px rgba(0,0,0,0.1);
       margin-bottom: 25px;
     }
+
     .tracker {
       display: flex;
       justify-content: space-between;
       margin-top: 10px;
     }
+
     .step {
       flex: 1;
       text-align: center;
@@ -52,12 +60,14 @@
       background-color: #ccc;
       transition: all 0.3s ease-in-out;
     }
+
     .complete { background-color: #007bff; }
     .active { background-color: #28a745; }
     .future {
       background-color: #d3d3d3;
       color: #555;
     }
+
     .time-remaining {
       font-size: 0.95em;
       color: #666;
@@ -73,10 +83,8 @@
     <button id="login-button">Login</button>
     <p id="login-error" style="color:red;"></p>
     <p>
-      Not registered? 
-      <button onclick="window.open('https://brokersbloc.com/broker-quotetracker-registration/', '_blank')">
-        Register
-      </button>
+      Not registered?
+      <button onclick="window.open('https://brokersbloc.com/broker-quotetracker-registration/', '_blank')">Register</button>
     </p>
   </div>
 
@@ -103,7 +111,7 @@
       const data = await res.json();
 
       if (res.ok) {
-        sessionStorage.setItem("brokerName", data.brokerName);  // This is now "Broker First Name"
+        sessionStorage.setItem("brokerName", data.brokerName);  // Broker First Name
         sessionStorage.setItem("brokerEmail", email);
         sessionStorage.setItem("brokerPassword", password);
         loadDashboard();
