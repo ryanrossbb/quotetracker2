@@ -10,7 +10,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(cors());
-app.use(express.static(path.join(__dirname)));
+app.use(express.static(path.join(__dirname))); // Serves index.html and other static files
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -48,7 +48,8 @@ app.get('/api/verify-broker', async (req, res) => {
       return res.status(403).json({ error: "Invalid login credentials" });
     }
 
-    const brokerName = records[0].fields["Username"] || "Broker";
+    // ✅ Use "Broker First Name" instead of "Username"
+    const brokerName = records[0].fields["Broker First Name"] || "Broker";
     return res.json({ brokerName });
 
   } catch (err) {
@@ -64,7 +65,7 @@ app.get('/api/projects', async (req, res) => {
 
   try {
     const records = await base(process.env.AIRTABLE_TABLE).select({
-      filterByFormula: `{Username} = '${brokerName}'`
+      filterByFormula: `{Broker First Name} = '${brokerName}'`
     }).all();
 
     const results = records
