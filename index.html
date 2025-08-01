@@ -170,7 +170,7 @@
               tracker.appendChild(step);
             });
 
-            const hours = parseInt((parseFloat(rfp.timeRemaining) || 0) * 24);
+            const hours = Math.round(parseFloat(rfp.timeRemaining) || 0);
             const timeText = isNaN(hours) ? "N/A" : `${hours} hour${hours !== 1 ? 's' : ''}`;
 
             const timeInfo = document.createElement("div");
