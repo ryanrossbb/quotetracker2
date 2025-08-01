@@ -119,7 +119,7 @@
       const data = await res.json();
 
       if (res.ok) {
-        sessionStorage.setItem("brokerName", data.brokerName);  // Broker First Name
+        sessionStorage.setItem("brokerName", data.brokerName);
         sessionStorage.setItem("brokerEmail", email);
         sessionStorage.setItem("brokerPassword", password);
         loadDashboard();
