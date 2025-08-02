@@ -84,7 +84,7 @@
     <p id="login-error" style="color:red;"></p>
     <p>
       Not registered?
-      <button onclick="window.open('https://brokersbloc.com/register/', '_blank')">Register</button>
+      <button onclick="window.open('https://brokersbloc.com/broker-quotetracker-registration/', '_blank')">Register</button>
     </p>
   </div>
 
@@ -170,8 +170,8 @@
               tracker.appendChild(step);
             });
 
-            const minutes = Math.round(parseFloat(rfp.timeRemaining) || 0);
-            const timeText = isNaN(minutes) ? "N/A" : `${minutes} hour${minutes !== 1 ? 's' : ''}`;
+            const minutes = Math.round((parseFloat(rfp.timeRemaining) || 0) * 1440);
+            const timeText = isNaN(minutes) ? "N/A" : `${minutes} minute${minutes !== 1 ? 's' : ''}`;
 
             const timeInfo = document.createElement("div");
             timeInfo.className = "time-remaining";
@@ -189,7 +189,7 @@
       const email = sessionStorage.getItem("brokerEmail");
       const password = sessionStorage.getItem("brokerPassword");
 
-      const url = `https://brokersbloc.com/submit-rfp/`;
+      const url = `https://brokersbloc.com/submit/`;
       window.open(url, "_blank");
     }
 
@@ -198,7 +198,6 @@
       location.reload();
     }
 
-    // Bind events
     document.addEventListener("DOMContentLoaded", () => {
       document.getElementById("login-button").addEventListener("click", verifyBroker);
       document.getElementById("submit-button").addEventListener("click", openRfpForm);
