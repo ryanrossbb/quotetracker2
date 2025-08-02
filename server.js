@@ -122,3 +122,38 @@ app.post('/api/update-password', async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 });
+// 🔐 RESET PASSWORD WITH TEMP PASSWORD
+app.post('/api/reset-password', async (req, res) => {
+  const { email, tempPassword, newPassword } = req.body;
+
+  if (!email || !tempPassword || !newPassword) {
+    return res.status(400).json({ error: "Missing fields" });
+  }
+
+  try {
+    const records = await base(process.env.AIRTABLE_BROKER_TABLE).select({
+      filterByFormula: `AND(
+        LOWER(TRIM({Email})) = LOWER('${email.trim()}'),
+        TRIM({Password}) = '${tempPassword.trim()}'
+      )`,
+      maxRecords: 1
+    }).firstPage();
+
+    if (!records.length) {
+      return res.status(403).json({ error: "Temporary password incorrect or expired" });
+    }
+
+    const recordId = records[0].id;
+    const brokerName = records[0].fields["Broker First Name"] || "Broker";
+
+    await base(process.env.AIRTABLE_BROKER_TABLE).update(recordId, {
+      "Password": newPassword
+    });
+
+    res.json({ success: true, brokerName });
+
+  } catch (err) {
+    console.error("❌ Error resetting password:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
