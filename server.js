@@ -27,35 +27,51 @@ const stageMap = {
 };
 
 // 🔐 LOGIN USING EMAIL + PASSWORD
+// 🔐 LOGIN WITH DEBUG LOGGING
 app.get('/api/verify-broker', async (req, res) => {
   const email = req.query.email;
   const password = req.query.password;
 
+  console.log("==> ///////////////////////////////////////////////////////////");
+  console.log("==> LOGIN ATTEMPT:");
+  console.log("Email:", email);
+  console.log("Password:", password);
+
   if (!email || !password) {
+    console.log("❌ Missing email or password in request");
     return res.status(400).json({ error: "Missing email or password" });
   }
 
+  const formula = `AND(
+    LOWER(TRIM({Email})) = LOWER('${email.trim()}'),
+    TRIM({Password}) = '${password.trim()}'
+  )`;
+
+  console.log("Airtable filter formula:", formula);
+
   try {
     const records = await base(process.env.AIRTABLE_BROKER_TABLE).select({
-      filterByFormula: `AND(
-        LOWER(TRIM({Email})) = LOWER('${email.trim()}'),
-        TRIM({Password}) = '${password.trim()}'
-      )`,
+      filterByFormula: formula,
       maxRecords: 1
     }).firstPage();
 
+    console.log("🔍 Matching records:", records.length);
+
     if (!records.length) {
+      console.log("❌ No matching records found.");
       return res.status(403).json({ error: "Invalid login credentials" });
     }
 
     const brokerName = records[0].fields["Broker First Name"] || "Broker";
+    console.log("✅ Broker authenticated:", brokerName);
     return res.json({ brokerName });
 
   } catch (err) {
-    console.error("❌ Broker verification failed:", err);
+    console.error("❌ Login server error:", err);
     res.status(500).json({ error: "Server error during login" });
   }
 });
+
 
 // 📦 FETCH TRACKED RFPs
 app.get('/api/projects', async (req, res) => {
