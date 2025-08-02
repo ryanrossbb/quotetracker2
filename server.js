@@ -48,7 +48,6 @@ app.get('/api/verify-broker', async (req, res) => {
       return res.status(403).json({ error: "Invalid login credentials" });
     }
 
-    // ✅ Use "Broker First Name" instead of "Username"
     const brokerName = records[0].fields["Broker First Name"] || "Broker";
     return res.json({ brokerName });
 
@@ -85,48 +84,14 @@ app.get('/api/projects', async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`✅ Server running at http://localhost:${PORT}`);
-});
-
-// 🔐 UPDATE PASSWORD
-app.post('/api/update-password', async (req, res) => {
-  const { email, currentPassword, newPassword } = req.body;
-
-  if (!email || !currentPassword || !newPassword) {
-    return res.status(400).json({ error: "Missing fields" });
-  }
-
-  try {
-    const records = await base(process.env.AIRTABLE_BROKER_TABLE).select({
-      filterByFormula: `AND(
-        LOWER(TRIM({Email})) = LOWER('${email.trim()}'),
-        TRIM({Password}) = '${currentPassword.trim()}'
-      )`,
-      maxRecords: 1
-    }).firstPage();
-
-    if (!records.length) {
-      return res.status(403).json({ error: "Current password incorrect" });
-    }
-
-    const recordId = records[0].id;
-
-    await base(process.env.AIRTABLE_BROKER_TABLE).update(recordId, {
-      "Password": newPassword
-    });
-
-    res.json({ success: true });
-  } catch (err) {
-    console.error("❌ Error updating password:", err);
-    res.status(500).json({ error: "Server error" });
-  }
-});
-// 🔐 RESET PASSWORD WITH TEMP PASSWORD
+// 🔐 RESET PASSWORD WITH TEMP PASSWORD (with debug logs)
 app.post('/api/reset-password', async (req, res) => {
   const { email, tempPassword, newPassword } = req.body;
 
+  console.log("🔍 Incoming reset request:", { email, tempPassword, newPassword });
+
   if (!email || !tempPassword || !newPassword) {
+    console.log("🚫 Missing fields");
     return res.status(400).json({ error: "Missing fields" });
   }
 
@@ -139,7 +104,10 @@ app.post('/api/reset-password', async (req, res) => {
       maxRecords: 1
     }).firstPage();
 
+    console.log("🔍 Found records:", records.length);
+
     if (!records.length) {
+      console.log("🚫 Temp password doesn't match or record not found");
       return res.status(403).json({ error: "Temporary password incorrect or expired" });
     }
 
@@ -150,10 +118,16 @@ app.post('/api/reset-password', async (req, res) => {
       "Password": newPassword
     });
 
+    console.log("✅ Password updated for:", email);
+
     res.json({ success: true, brokerName });
 
   } catch (err) {
     console.error("❌ Error resetting password:", err);
     res.status(500).json({ error: "Server error" });
   }
+});
+
+app.listen(PORT, () => {
+  console.log(`✅ Server running at http://localhost:${PORT}`);
 });
