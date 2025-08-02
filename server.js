@@ -26,7 +26,6 @@ const stageMap = {
   "Quote Returned": 4
 };
 
-// 🔐 LOGIN USING EMAIL + PASSWORD
 // 🔐 LOGIN WITH DEBUG LOGGING
 app.get('/api/verify-broker', async (req, res) => {
   const email = req.query.email;
