@@ -85,13 +85,16 @@ app.get('/api/projects', async (req, res) => {
 });
 
 // 🔐 RESET PASSWORD WITH TEMP PASSWORD (with debug logs)
+// 🔐 RESET PASSWORD WITH TEMP PASSWORD
 app.post('/api/reset-password', async (req, res) => {
   const { email, tempPassword, newPassword } = req.body;
 
-  console.log("🔍 Incoming reset request:", { email, tempPassword, newPassword });
+  console.log("==> Reset password request:");
+  console.log("Email:", email);
+  console.log("Temp Password:", tempPassword);
+  console.log("New Password:", newPassword);
 
   if (!email || !tempPassword || !newPassword) {
-    console.log("🚫 Missing fields");
     return res.status(400).json({ error: "Missing fields" });
   }
 
@@ -104,10 +107,9 @@ app.post('/api/reset-password', async (req, res) => {
       maxRecords: 1
     }).firstPage();
 
-    console.log("🔍 Found records:", records.length);
+    console.log("🔍 Matching records:", records.length);
 
     if (!records.length) {
-      console.log("🚫 Temp password doesn't match or record not found");
       return res.status(403).json({ error: "Temporary password incorrect or expired" });
     }
 
@@ -118,8 +120,7 @@ app.post('/api/reset-password', async (req, res) => {
       "Password": newPassword
     });
 
-    console.log("✅ Password updated for:", email);
-
+    console.log("✅ Password updated for:", brokerName);
     res.json({ success: true, brokerName });
 
   } catch (err) {
@@ -127,6 +128,7 @@ app.post('/api/reset-password', async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 });
+
 
 app.listen(PORT, () => {
   console.log(`✅ Server running at http://localhost:${PORT}`);
