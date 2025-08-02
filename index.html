@@ -170,8 +170,8 @@
               tracker.appendChild(step);
             });
 
-            const hours = Math.round(parseFloat(rfp.timeRemaining) || 0);
-            const timeText = isNaN(hours) ? "N/A" : `${hours} hour${hours !== 1 ? 's' : ''}`;
+            const minutes = Math.round(parseFloat(rfp.timeRemaining) || 0);
+            const timeText = isNaN(minutes) ? "N/A" : `${minutes} hour${minutes !== 1 ? 's' : ''}`;
 
             const timeInfo = document.createElement("div");
             timeInfo.className = "time-remaining";
