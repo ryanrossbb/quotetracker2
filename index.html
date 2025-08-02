@@ -61,8 +61,14 @@
       transition: all 0.3s ease-in-out;
     }
 
-    .complete { background-color: #007bff; }
-    .active { background-color: #28a745; }
+    .complete {
+      background-color: #007bff;
+    }
+
+    .active {
+      background-color: #28a745;
+    }
+
     .future {
       background-color: #d3d3d3;
       color: #555;
@@ -93,159 +99,3 @@
     <div class="btn-row">
       <button id="submit-button">Submit New RFP</button>
       <button id="refresh-button">Refresh Tracker</button>
-      <button id="logout-button">Logout</button>
-    </div>
-    <div id="tracker-container"></div>
-
-    <div id="change-password" style="margin-top: 40px;">
-      <h3>Change Password</h3>
-      <input type="password" id="old-password" placeholder="Current Password" /><br>
-      <input type="password" id="new-password" placeholder="New Password" /><br>
-      <button onclick="updatePassword()">Update Password</button>
-      <p id="password-message" style="color: green;"></p>
-    </div>
-  </div>
-
-  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-  <script>
-    const STAGES = ["Census Received", "Processing", "Engaging Carriers", "Preparing Quote", "Quote Returned"];
-    let lastSeenStages = {};
-
-    async function verifyBroker() {
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
-
-      const res = await fetch(`/api/verify-broker?email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`);
-      const data = await res.json();
-
-      if (res.ok) {
-        sessionStorage.setItem("brokerName", data.brokerName);
-        sessionStorage.setItem("brokerEmail", email);
-        sessionStorage.setItem("brokerPassword", password);
-        loadDashboard();
-      } else {
-        document.getElementById("login-error").textContent = "Invalid email or password.";
-      }
-    }
-
-    function loadDashboard() {
-      const name = sessionStorage.getItem("brokerName");
-      const email = sessionStorage.getItem("brokerEmail");
-
-      if (!name || !email) return;
-
-      document.getElementById("login-section").style.display = "none";
-      document.getElementById("dashboard-section").style.display = "block";
-      document.getElementById("welcome-msg").textContent = `Welcome, ${name}`;
-
-      fetch(`/api/projects?broker=${encodeURIComponent(name)}`)
-        .then(res => res.json())
-        .then(data => {
-          const container = document.getElementById("tracker-container");
-          container.innerHTML = "";
-          if (!data.length) {
-            container.innerHTML = "<p>No RFPs found.</p>";
-            return;
-          }
-
-          data.forEach(rfp => {
-            const currentStage = rfp.stage;
-            const stageIndex = STAGES.indexOf(currentStage);
-            const stageKey = rfp.projectName;
-            const prevStage = lastSeenStages[stageKey];
-            lastSeenStages[stageKey] = currentStage;
-
-            if (currentStage === "Quote Returned" && prevStage !== "Quote Returned") {
-              confetti({ particleCount: 200, spread: 100, origin: { y: 0.6 } });
-            }
-
-            const card = document.createElement("div");
-            card.className = "rfp-card";
-            card.innerHTML = `<h3>${rfp.projectName}</h3>`;
-
-            const tracker = document.createElement("div");
-            tracker.className = "tracker";
-
-            STAGES.forEach((stage, i) => {
-              const step = document.createElement("div");
-              step.classList.add("step");
-
-              if (i < stageIndex) step.classList.add("complete");
-              else if (i === stageIndex) step.classList.add("active");
-              else step.classList.add("future");
-
-              step.textContent = stage;
-              tracker.appendChild(step);
-            });
-
-            const hours = Math.round(parseFloat(rfp.timeRemaining) || 0);
-            const timeText = isNaN(hours) ? "N/A" : `${hours} hour${hours !== 1 ? 's' : ''}`;
-
-            const timeInfo = document.createElement("div");
-            timeInfo.className = "time-remaining";
-            timeInfo.textContent = `Time Remaining: ${timeText}`;
-
-            card.appendChild(tracker);
-            card.appendChild(timeInfo);
-            container.appendChild(card);
-          });
-        });
-    }
-
-    function openRfpForm() {
-      const name = sessionStorage.getItem("brokerName");
-      const email = sessionStorage.getItem("brokerEmail");
-      const password = sessionStorage.getItem("brokerPassword");
-
-      const url = `https://airtable.com/appTl5b0TOB6Sh8N5/pagd8oOz2RO9zbYGb/form?prefill_Broker%20First%20Name=${encodeURIComponent(name)}&prefill_Email=${encodeURIComponent(email)}&prefill_Password=${encodeURIComponent(password)}`;
-      window.open(url, "_blank");
-    }
-
-    async function updatePassword() {
-      const email = sessionStorage.getItem("brokerEmail");
-      const currentPassword = document.getElementById("old-password").value;
-      const newPassword = document.getElementById("new-password").value;
-      const message = document.getElementById("password-message");
-
-      if (!newPassword || !currentPassword) {
-        message.style.color = "red";
-        message.textContent = "Please fill in both fields.";
-        return;
-      }
-
-      const res = await fetch('/api/update-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, currentPassword, newPassword })
-      });
-
-      const data = await res.json();
-
-      if (res.ok) {
-        message.style.color = "green";
-        message.textContent = "Password updated successfully!";
-        sessionStorage.setItem("brokerPassword", newPassword);
-      } else {
-        message.style.color = "red";
-        message.textContent = data.error || "Failed to update password.";
-      }
-    }
-
-    function logout() {
-      sessionStorage.clear();
-      location.reload();
-    }
-
-    document.addEventListener("DOMContentLoaded", () => {
-      document.getElementById("login-button").addEventListener("click", verifyBroker);
-      document.getElementById("submit-button").addEventListener("click", openRfpForm);
-      document.getElementById("refresh-button").addEventListener("click", loadDashboard);
-      document.getElementById("logout-button").addEventListener("click", logout);
-
-      if (sessionStorage.getItem("brokerName")) {
-        loadDashboard();
-      }
-    });
-  </script>
-</body>
-</html>
