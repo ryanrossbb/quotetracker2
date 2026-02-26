@@ -25,7 +25,8 @@ const stageMap = {
   "Processing": 1,
   "Engaging Carriers": 2,
   "Preparing Quote": 3,
-  "Quote Returned": 4
+  "Quote Returned": 4,
+  "Sold": 5
 };
 
 // ✅ LOGIN ROUTE

@@ -304,7 +304,8 @@
       "Processing",
       "Engaging Carriers",
       "Preparing Quote",
-      "Quote Returned"
+      "Quote Returned",
+      "Sold"
     ];
 
     function buildStageBar(currentStage) {
@@ -390,10 +391,10 @@
           const lives = p.livesSubmitted;
           if (typeof lives === "number") {
             totalLives += lives;
-            if (p.stage === "Quote Returned") closedLives += lives;
+            if (p.stage === "Sold") closedLives += lives;
           }
 
-          const isDone      = p.stage === "Quote Returned";
+          const isDone      = p.stage === "Sold";
           const livesHTML   = lives != null
             ? `<span class="lives-value">${lives.toLocaleString()}</span>`
             : `<span style="color:#aaa;font-style:italic">Not set</span>`;
