@@ -49,10 +49,13 @@ app.get('/api/verify-broker', async (req, res) => {
     }).firstPage();
 
     if (!records.length) {
+      console.log("❌ No matching broker record found for:", email);
       return res.status(403).json({ error: "Invalid email or password" });
     }
 
+    console.log("✅ Broker record fields:", JSON.stringify(records[0].fields));
     const brokerName = records[0].fields["Broker First Name"] || "Broker";
+    console.log("✅ Returning brokerName:", brokerName);
     return res.json({ brokerName });
 
   } catch (err) {

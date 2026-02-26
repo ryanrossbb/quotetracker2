@@ -275,6 +275,9 @@
       const errEl    = document.getElementById("login-error");
       errEl.textContent = "";
 
+      // Always clear stale session before attempting login
+      sessionStorage.clear();
+
       try {
         const res  = await fetch(`/api/verify-broker?email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`);
         const data = await res.json();
@@ -285,7 +288,7 @@
           sessionStorage.setItem("brokerPassword", password);
           loadDashboard();
         } else {
-          errEl.textContent = "Invalid email or password.";
+          errEl.textContent = data.error || "Invalid email or password.";
         }
       } catch (e) {
         errEl.textContent = "Could not connect. Please try again.";
