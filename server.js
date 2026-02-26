@@ -52,7 +52,7 @@ app.get('/api/verify-broker', async (req, res) => {
       return res.status(403).json({ error: "Invalid email or password" });
     }
 
-    const brokerName = records[0].fields["Username"] || records[0].fields["Name"] || email;
+    const brokerName = records[0].fields["Broker First Name"] || "Broker";
     return res.json({ brokerName });
 
   } catch (err) {
@@ -68,7 +68,7 @@ app.get('/api/projects', async (req, res) => {
 
   try {
     const records = await base(process.env.AIRTABLE_TABLE).select({
-      filterByFormula: `{Username} = '${brokerName}'`
+      filterByFormula: `{Broker First Name} = '${brokerName}'`
     }).all();
 
     console.log("Returned fields:");
@@ -84,7 +84,7 @@ app.get('/api/projects', async (req, res) => {
         stageIndex: stageMap[record.fields["Stage"]],
         timeRemaining: record.fields["Time Remaining"] || "N/A",
         submissionTime: record.fields["created"] || null,
-        livesSubmitted: record.fields["Group Size"] || null
+        livesSubmitted: record.fields["Group Size"] ?? null
       }));
 
     res.json(results);
@@ -95,35 +95,42 @@ app.get('/api/projects', async (req, res) => {
   }
 });
 
-// ✅ UPLOAD RFP
-app.post('/api/upload-rfp', upload.single('file'), async (req, res) => {
-  const { username, groupName } = req.body;
-  const file = req.file;
+// 🔐 RESET PASSWORD
+app.post('/api/reset-password', async (req, res) => {
+  const { email, tempPassword, newPassword } = req.body;
 
-  if (!username || !groupName || !file) {
-    return res.status(400).json({ error: 'Missing required fields' });
+  console.log("==> Reset password request for:", email);
+
+  if (!email || !tempPassword || !newPassword) {
+    return res.status(400).json({ error: "Missing fields" });
   }
 
   try {
-    // You can replace this with real file hosting later (e.g., S3 or Cloudinary)
-    const record = await base(process.env.AIRTABLE_TABLE).create({
-      "Username": username,
-      "RFP Name": groupName,
-      "Stage": "Census Received",
-      "Time Remaining": "TBD",
-      "File Upload": [
-        {
-          url: `https://yourdomain.com/uploads/${file.filename}`,
-          filename: file.originalname
-        }
-      ]
+    const records = await base(process.env.AIRTABLE_BROKER_TABLE).select({
+      filterByFormula: `AND(
+        LOWER(TRIM({Email})) = LOWER('${email.trim()}'),
+        TRIM({Password}) = '${tempPassword.trim()}'
+      )`,
+      maxRecords: 1
+    }).firstPage();
+
+    if (!records.length) {
+      return res.status(403).json({ error: "Temporary password incorrect or expired" });
+    }
+
+    const recordId   = records[0].id;
+    const brokerName = records[0].fields["Broker First Name"] || "Broker";
+
+    await base(process.env.AIRTABLE_BROKER_TABLE).update(recordId, {
+      "Password": newPassword
     });
 
-    res.json({ success: true, recordId: record.id });
+    console.log("✅ Password updated for:", brokerName);
+    res.json({ success: true, brokerName });
 
   } catch (err) {
-    console.error("❌ Error uploading RFP:", err);
-    res.status(500).json({ error: "Upload failed" });
+    console.error("❌ Error resetting password:", err);
+    res.status(500).json({ error: "Server error" });
   }
 });
 
