@@ -9,7 +9,7 @@
 
     body {
       font-family: sans-serif;
-      background: #f4f6f9;
+      background: #ffffff;
       margin: 0;
       padding: 2rem;
       text-align: center;
@@ -203,6 +203,45 @@
     /* ── STATUS MESSAGES ── */
     #rfp-loading { color: #666; font-style: italic; margin: 2rem 0; }
     #rfp-error   { color: #dc3545; margin: 2rem 0; }
+
+    /* ── 300 CLUB PROGRESS BAR ── */
+    #progress-section {
+      max-width: 860px;
+      margin: 0 auto 1.75rem;
+      background: #fff;
+      border-radius: 12px;
+      padding: 1.25rem 1.5rem;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.09);
+      text-align: left;
+    }
+
+    #progress-section .progress-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 0.6rem;
+    }
+
+    #progress-section .progress-label span {
+      color: #28a745;
+    }
+
+    .progress-track {
+      background: #e9ecef;
+      border-radius: 999px;
+      height: 18px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #28a745, #20c997);
+      transition: width 0.6s ease;
+      min-width: 2px;
+    }
   </style>
 </head>
 <body>
@@ -221,7 +260,6 @@
 
   <!-- DASHBOARD -->
   <div id="dashboard-section" style="display:none;">
-    <h1>The BrokersBloc Tracker</h1>
     <h2 id="welcome-msg"></h2>
 
     <div id="dashboard-toolbar">
@@ -239,6 +277,17 @@
       <div class="summary-card closed">
         <div class="label">Lives Closed</div>
         <div class="value" id="closed-lives">0</div>
+      </div>
+    </div>
+
+    <!-- 300 CLUB PROGRESS -->
+    <div id="progress-section" style="display:none">
+      <div class="progress-label">
+        <span id="progress-text">Progress to 300 Club</span>
+        <span id="progress-count">0 / 300</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="progress-fill" style="width:0%"></div>
       </div>
     </div>
 
@@ -309,12 +358,16 @@
       const listEl     = document.getElementById("rfp-list");
       const totalEl    = document.getElementById("total-lives");
       const closedEl   = document.getElementById("closed-lives");
+      const progressEl = document.getElementById("progress-section");
+      const fillEl     = document.getElementById("progress-fill");
+      const countEl    = document.getElementById("progress-count");
 
       // reset
       loadingEl.textContent   = "Loading your RFPs...";
       loadingEl.style.display = "block";
       errorEl.style.display   = "none";
       summaryEl.style.display = "none";
+      progressEl.style.display = "none";
       listEl.innerHTML        = "";
 
       try {
@@ -361,6 +414,13 @@
         totalEl.textContent     = totalLives.toLocaleString();
         closedEl.textContent    = closedLives.toLocaleString();
         summaryEl.style.display = "flex";
+
+        // 300 Club progress bar
+        const goal    = 300;
+        const pct     = Math.min(closedLives / goal * 100, 100).toFixed(1);
+        fillEl.style.width  = pct + "%";
+        countEl.textContent = `${closedLives.toLocaleString()} / ${goal}`;
+        progressEl.style.display = "block";
 
       } catch (err) {
         loadingEl.style.display = "none";
