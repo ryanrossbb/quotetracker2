@@ -44,7 +44,7 @@ app.get('/api/verify-broker', async (req, res) => {
     const records = await base(process.env.AIRTABLE_BROKER_TABLE).select({
       filterByFormula: `AND(
         LOWER(TRIM({Email})) = LOWER('${email.trim()}'),
-        TRIM({Password}) = '${password.trim()}'
+        TRIM({unique Login}) = '${password.trim()}'
       )`,
       maxRecords: 1
     }).firstPage();
@@ -113,7 +113,7 @@ app.post('/api/reset-password', async (req, res) => {
     const records = await base(process.env.AIRTABLE_BROKER_TABLE).select({
       filterByFormula: `AND(
         LOWER(TRIM({Email})) = LOWER('${email.trim()}'),
-        TRIM({Password}) = '${tempPassword.trim()}'
+        TRIM({unique Login}) = '${tempPassword.trim()}'
       )`,
       maxRecords: 1
     }).firstPage();
@@ -126,7 +126,7 @@ app.post('/api/reset-password', async (req, res) => {
     const brokerName = records[0].fields["Broker First Name"] || "Broker";
 
     await base(process.env.AIRTABLE_BROKER_TABLE).update(recordId, {
-      "Password": newPassword
+      "unique Login": newPassword
     });
 
     console.log("✅ Password updated for:", brokerName);
