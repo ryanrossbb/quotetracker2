@@ -537,7 +537,8 @@
       listEl.innerHTML        = "";
 
       try {
-        const res      = await fetch(`/api/projects?broker=${encodeURIComponent(name)}`);
+        const email    = sessionStorage.getItem("brokerEmail");
+        const res      = await fetch(`/api/projects?email=${encodeURIComponent(email)}`);
         if (!res.ok) throw new Error("Failed to load RFPs");
         const projects = await res.json();
 

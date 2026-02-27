@@ -67,12 +67,26 @@ app.get('/api/verify-broker', async (req, res) => {
 
 // ✅ GET PROJECTS
 app.get('/api/projects', async (req, res) => {
-  const brokerName = req.query.broker;
-  if (!brokerName) return res.status(400).json({ error: "Missing Username" });
+  const email = req.query.email;
+  if (!email) return res.status(400).json({ error: "Missing email" });
 
   try {
+    // Step 1: look up the broker by email to get their linked RFP record IDs
+    const brokerRecords = await base(process.env.AIRTABLE_BROKER_TABLE).select({
+      filterByFormula: `LOWER(TRIM({Email})) = LOWER('${email.trim()}')`,
+      maxRecords: 1
+    }).firstPage();
+
+    if (!brokerRecords.length) return res.json([]);
+
+    const rfpIds = brokerRecords[0].fields["RFPs 2"] || [];
+    console.log("Linked RFP IDs:", rfpIds);
+    if (!rfpIds.length) return res.json([]);
+
+    // Step 2: fetch those specific RFP records by ID — no field name guessing needed
+    const formula = `OR(${rfpIds.map(id => `RECORD_ID()='${id}'`).join(',')})`;
     const records = await base(process.env.AIRTABLE_TABLE).select({
-      filterByFormula: `{Username} = '${brokerName}'`
+      filterByFormula: formula
     }).all();
 
     console.log("Returned fields:");
