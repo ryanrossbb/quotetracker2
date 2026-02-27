@@ -55,7 +55,7 @@ app.get('/api/verify-broker', async (req, res) => {
     }
 
     console.log("✅ Broker record fields:", JSON.stringify(records[0].fields));
-    const brokerName = records[0].fields["Broker First Name"] || "Broker";
+    const brokerName = records[0].fields["Broker Name"]?.trim() || records[0].fields["Brokerage Name"] || "Broker";
     console.log("✅ Returning brokerName:", brokerName);
     return res.json({ brokerName });
 
@@ -72,7 +72,7 @@ app.get('/api/projects', async (req, res) => {
 
   try {
     const records = await base(process.env.AIRTABLE_TABLE).select({
-      filterByFormula: `{Broker First Name} = '${brokerName}'`
+      filterByFormula: `{Username} = '${brokerName}'`
     }).all();
 
     console.log("Returned fields:");
@@ -123,7 +123,7 @@ app.post('/api/reset-password', async (req, res) => {
     }
 
     const recordId   = records[0].id;
-    const brokerName = records[0].fields["Broker First Name"] || "Broker";
+    const brokerName = records[0].fields["Broker Name"]?.trim() || records[0].fields["Brokerage Name"] || "Broker";
 
     await base(process.env.AIRTABLE_BROKER_TABLE).update(recordId, {
       "unique Login": newPassword
